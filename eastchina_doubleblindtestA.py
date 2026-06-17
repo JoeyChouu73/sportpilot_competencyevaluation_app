@@ -39,8 +39,6 @@ META_KEYWORDS = [
     "单位",
     "技术等级",
     "职务",
-    "机长",
-    "副驾驶",
     "总飞行时间",
     "本机型经历时间",
     "检查员",
@@ -59,25 +57,22 @@ SUBJECT_DEFS = [
 
 SUBJECT_ORDER = [item[0] for item in SUBJECT_DEFS]
 FLIGHT_SUBJECTS = SUBJECT_ORDER[:5]
-SUBJECT_NAME_MAP = dict(SUBJECT_DEFS)
 SUBJECT_SORT_MAP = {subject_no: idx for idx, subject_no in enumerate(SUBJECT_ORDER, start=1)}
-AIRBUS_TEMPLATE_DATA = [
-    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±20-±40ft（含）", -1.0),
-    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±40-60ft（含）", -2.0),
-    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±60-80ft（含）", -3.0),
-    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±80-100ft（含）", -4.0),
-    ("科目一", "速度偏差（偏差持续3秒，加倍）", "2-5KT（含）", -1.0),
-    ("科目一", "速度偏差（偏差持续3秒，加倍）", "5-10KT（含）", -2.0),
-    ("科目一", "速度偏差（偏差持续3秒，加倍）", "＞10KT", -3.0),
-    ("科目一", "改出航向 偏差", "2°-5°（含）", -1.0),
-    ("科目一", "改出航向 偏差", "5°-10°（含）", -2.0),
-    ("科目一", "改出航向 偏差", "＞±10°", -3.0),
+AIRBUS_STANDARD_DATA = [
+    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±40-60ft（含）", -1.0),
+    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±60-80ft（含）", -2.0),
+    ("科目一", "高度偏差（偏差持续5秒，加倍）", "±80-100ft（含）", -3.0),
+    ("科目一", "高度偏差（偏差持续5秒，加倍）", "100ft以上", -4.0),
+    ("科目一", "速度偏差（偏差持续3秒，加倍）", "5-10KT（含）", -1.0),
+    ("科目一", "速度偏差（偏差持续3秒，加倍）", "＞10KT", -2.0),
+    ("科目一", "改出航向 偏差", "5°-10°（含）", -1.0),
+    ("科目一", "改出航向 偏差", "＞±10°", -2.0),
     ("科目一", "坡度保持", "偏差持续3s以上", -1.0),
     ("科目一", "进入和改出 滚转速率", "较明显停顿粗猛发力", -1.0),
     ("科目一", "进入和改出 滚转速率", "明显停顿或粗猛发力", -2.0),
     ("科目二", "起飞抬头率", "过快或过慢", -1.0),
     ("科目二", "DON’T SINK", "DON’T SINK", -3.0),
-    ("科目二", "离地后 50ft 飞机位置", "偏出跑道", -1.0),
+    ("科目二", "离地后50ft飞机位置", "偏出跑道", -1.0),
     ("科目二", "一边航迹", "≥3°", -2.0),
     ("科目二", "一边/一转弯姿态", "≥25°", -3.0),
     ("科目二", "一转弯坡度", "＞30°", -3.0),
@@ -117,8 +112,8 @@ AIRBUS_TEMPLATE_DATA = [
     ("科目三", "DON’T SINK", "DON’T SINK", -3.0),
     ("科目三", "扇区高度意识", "未考虑安全高度", -3.0),
     ("科目三", "位置管理意识", "未及时主动管理飞机位置", -1.0),
-    ("科目三", "精确过台", "每偏差 0.5NM", -1.0),
-    ("科目三", "背台航迹控制", "超过 3NM 后，未在航迹上", -2.0),
+    ("科目三", "精确过台", "每偏差0.5NM", -1.0),
+    ("科目三", "背台航迹控制", "超过3NM后，未在航迹上", -2.0),
     ("科目三", "程序转弯时机", "未按程序要求，提前/推迟转弯", -2.0),
     ("科目三", "四转弯方法", "过早或者过晚", -2.0),
     ("科目三", "稳定进近", "下降顶点未建立稳定进近", -3.0),
@@ -130,9 +125,9 @@ AIRBUS_TEMPLATE_DATA = [
     ("科目三", "五边速度控制（偏差持续5秒计分）", "±5-±10KT（含）", -1.0),
     ("科目三", "五边速度控制（偏差持续5秒计分）", "＞±10KT", -2.0),
     ("科目三", "SINK RATE", "SINK RATE", -3.0),
-    ("科目三", "仪表转目视飞行", "下降稳定性（PAPI 变化）", -1.0),
+    ("科目三", "仪表转目视飞行", "下降稳定性（PAPI变化）", -1.0),
     ("科目三", "仪表转目视飞行", "航迹稳定性（来回炒菜）", -1.0),
-    ("科目三", "仪表转目视飞行", "坡度稳定性（单向变化超过 5°）", -1.0),
+    ("科目三", "仪表转目视飞行", "坡度稳定性（单向变化超过5°）", -1.0),
     ("科目三", "横侧控制", "100ft以下超出跑道边线（含）", -1.0),
     ("科目三", "入口高度", "相差每10ft", -1.0),
     ("科目三", "入口位置", "不在跑道内", -5.0),
@@ -144,13 +139,13 @@ AIRBUS_TEMPLATE_DATA = [
     ("科目四", "程序", "单发初始姿态控制", -1.0),
     ("科目四", "程序", "单发推力控制", -1.0),
     ("科目四", "程序", "速度：＜Vref ＞Vref+20", -1.0),
-    ("科目四", "离地位置控制", "50ft 偏出跑道边线", -3.0),
+    ("科目四", "离地位置控制", "50ft偏出跑道边线", -3.0),
     ("科目四", "航迹误差", "±5°-±10°（含）", -1.0),
     ("科目四", "航迹误差", "＞±10°", -2.0),
     ("科目四", "坡度", "≥5°", -1.0),
     ("科目四", "坡度", "≥10°", -2.0),
-    ("科目四", "侧滑控制", "100ft 侧滑未消除", -2.0),
-    ("科目四", "侧滑控制", "未正确使用方向舵配 平", -2.0),
+    ("科目四", "侧滑控制", "100ft侧滑未消除", -2.0),
+    ("科目四", "侧滑控制", "未正确使用方向舵配平", -2.0),
     ("科目四", "通信", "没有宣布“PANPAN”", -1.0),
     ("科目五", "1000ft以下五边剖面控制", "1000ft未稳定进近", -1.0),
     ("科目五", "1000ft以下五边剖面控制", "LOC 每半个点", -1.0),
@@ -187,6 +182,7 @@ SUBJECT_START_ITEMS = OrderedDict(
         ("高度偏差", ("科目一", "大坡度盘旋")),
         ("起飞抬头率", ("科目二", "大侧风目视起落")),
         ("滑跑方向", ("科目三", "非精密进近+中断着陆")),
+        ("中断动作", ("科目四", "中断着陆后发动机失效")),
         ("程序", ("科目四", "中断着陆后发动机失效")),
         ("1000ft以下五边剖面控制", ("科目五", "单发ILS无指引落地")),
         ("综合考评", ("综合考评", "综合考评")),
@@ -201,6 +197,19 @@ DEFAULT_COLOR_SEQUENCE = [
     "#00A3A3",
     "#828282",
 ]
+CAPTAIN_COLOR = "#27AE60"
+FIRST_OFFICER_COLOR = "#2F80ED"
+OVERALL_SCORE_COLOR = "#5DADE2"
+AVERAGE_LINE_COLOR = "#F2994A"
+
+# 科目颜色映射（蓝绿橙紫红）
+SUBJECT_COLORS = {
+    "科目一": "#2F80ED",  # 蓝色
+    "科目二": "#27AE60",  # 绿色
+    "科目三": "#F2994A",  # 橙色
+    "科目四": "#9B51E0",  # 紫色
+    "科目五": "#EB5757",  # 红色
+}
 
 
 def compact_text(value):
@@ -214,11 +223,6 @@ def compact_text(value):
 
 def key_text(value):
     return re.sub(r"\s+", "", compact_text(value))
-
-
-def match_key(value):
-    text = key_text(value)
-    return re.sub(r"[\\/／\s]+", "", text)
 
 
 def to_number(value):
@@ -249,20 +253,8 @@ def subject_sort_value(subject_no):
 
 def normalize_role(value):
     text = compact_text(value)
-    if "副驾驶" in text or "副驾" in text:
+    if "副" in text:
         return "副驾驶"
-    upper = text.upper()
-    if "F" in upper:
-        return "副驾驶"
-    if "机长" in text or "教" in text or "C" in upper:
-        return "机长"
-    return "机长"
-
-
-def resolve_role(row, tech_col=None):
-    tech_value = compact_text(row.get(tech_col, "")) if tech_col else ""
-    if tech_value:
-        return normalize_role(tech_value)
     return "机长"
 
 
@@ -319,115 +311,50 @@ def fill_id(cell):
     return color.rgb or color.indexed or color.theme or ""
 
 
-def template_key(scoring_item, deduction_item):
-    return match_key(scoring_item), match_key(deduction_item)
+def is_deduction_column(ws, col_idx):
+    row2 = compact_text(ws.cell(2, col_idx).value)
+    row3 = to_number(ws.cell(3, col_idx).value)
+    if not np.isnan(row3) and row3 < 0:
+        return True
+    if col_idx >= 10 and row2 and key_text(ws.cell(1, col_idx).value) not in {"总得分", "得分"}:
+        return True
+    return False
 
 
-def template_signature():
-    return f"embedded-airbus-template:{len(AIRBUS_TEMPLATE_DATA)}"
-
-
-def load_airbus_template_entries():
-    entries = []
-    for subject_no, scoring_item, deduction_item, score in AIRBUS_TEMPLATE_DATA:
-        entries.append(
-            {
-                "模板序号": len(entries) + 1,
-                "科目编号": subject_no,
-                "科目名称": SUBJECT_NAME_MAP.get(subject_no, subject_no),
-                "科目排序": subject_sort_value(subject_no),
-                "评分项目": scoring_item,
-                "扣分标准": deduction_item,
-                "标准分值": float(score) if not np.isnan(score) else np.nan,
-                "模板键": template_key(scoring_item, deduction_item),
-            }
-        )
-
-    return entries
-
-
-def build_template_lookup(template_entries):
-    lookup = {}
-    for entry in template_entries:
-        lookup.setdefault(entry["模板键"], []).append(entry)
-    return lookup
-
-
-def match_template_entry(scoring_item, deduction_item, template_lookup, last_template_index):
-    matches = template_lookup.get(template_key(scoring_item, deduction_item), [])
-    if not matches:
-        return None, last_template_index
-
-    later_matches = [entry for entry in matches if entry["模板序号"] > last_template_index]
-    selected = later_matches[0] if later_matches else matches[0]
-    return selected, max(last_template_index, selected["模板序号"])
-
-
-def detect_table_layout(ws):
-    best_header_row = 1
-    best_score = -1
-    for row_idx in range(1, min(ws.max_row, 8) + 1):
-        row_keys = [key_text(ws.cell(row_idx, col_idx).value) for col_idx in range(1, ws.max_column + 1)]
-        score = 0
-        for marker in ["序号", "技术等级", "检查员"]:
-            if any(marker in key for key in row_keys):
-                score += 3
-        for marker in ["得分", "填表得分", "实际得分", "所属单位", "所属/单位"]:
-            if any(marker in key for key in row_keys):
-                score += 1
-        if score > best_score:
-            best_score = score
-            best_header_row = row_idx
-
-    score_row = best_header_row + 2
-    if score_row > ws.max_row or key_text(ws.cell(score_row, 1).value) != "分值":
-        candidate_rows = []
-        for row_idx in range(best_header_row + 1, min(best_header_row + 5, ws.max_row) + 1):
-            negative_count = sum(
-                1
-                for col_idx in range(1, ws.max_column + 1)
-                if not np.isnan(to_number(ws.cell(row_idx, col_idx).value))
-                and to_number(ws.cell(row_idx, col_idx).value) < 0
-            )
-            candidate_rows.append((negative_count, row_idx))
-        score_row = max(candidate_rows)[1] if candidate_rows else best_header_row + 2
-
-    standard_row = score_row - 1
-    data_start_row = score_row + 1
-    first_deduction_col = None
-    for col_idx in range(1, ws.max_column + 1):
-        score_value = to_number(ws.cell(score_row, col_idx).value)
-        standard_value = compact_text(ws.cell(standard_row, col_idx).value)
-        if not np.isnan(score_value) and score_value < 0 and standard_value:
-            first_deduction_col = col_idx
-            break
-
-    if first_deduction_col is None:
-        first_deduction_col = 1
-
-    return best_header_row, standard_row, score_row, data_start_row, first_deduction_col
-
-
-def build_column_metadata(ws, template_entries=None):
-    template_entries = template_entries or load_airbus_template_entries()
-    header_row, standard_row, score_row, data_start_row, first_deduction_col = detect_table_layout(ws)
+def build_column_metadata(ws):
+    current_item = ""
+    current_subject = SUBJECT_DEFS[0]
+    standard_idx = 0
     counts = {}
     columns = []
     col_meta = OrderedDict()
     deduction_cols = []
-    template_col_count = len(template_entries)
-    last_template_col = first_deduction_col + template_col_count - 1
-    max_col = min(ws.max_column, last_template_col)
+
+    max_col = 1
+    for col_idx in range(1, ws.max_column + 1):
+        if any(ws.cell(row_idx, col_idx).value not in (None, "") for row_idx in (1, 2, 3)):
+            max_col = col_idx
 
     for col_idx in range(1, max_col + 1):
-        if first_deduction_col <= col_idx <= last_template_col:
-            template_entry = template_entries[col_idx - first_deduction_col]
-            subject_no = template_entry["科目编号"]
-            subject_name = template_entry["科目名称"]
-            scoring_item = template_entry["评分项目"]
-            deduction_item = template_entry["扣分标准"]
-            score = template_entry["标准分值"]
-            column_order = template_entry["模板序号"]
+        top = compact_text(ws.cell(1, col_idx).value)
+        bottom = compact_text(ws.cell(2, col_idx).value)
+        score = to_number(ws.cell(3, col_idx).value)
+
+        if top:
+            current_item = top
+
+        if is_deduction_column(ws, col_idx):
+            if standard_idx < len(AIRBUS_STANDARD_DATA):
+                subject_no, scoring_item, deduction_item, score = AIRBUS_STANDARD_DATA[standard_idx]
+                subject_name = dict(SUBJECT_DEFS).get(subject_no, subject_no)
+                column_order = standard_idx + 1
+                standard_idx += 1
+            else:
+                scoring_item = current_item or top or "未命名评分项目"
+                current_subject = subject_from_item(scoring_item, current_subject)
+                subject_no, subject_name = current_subject
+                deduction_item = bottom or scoring_item
+                column_order = len(deduction_cols) + 1
             col_name = f"{subject_no}_{scoring_item}_{deduction_item}"
             col_name = make_unique_name(col_name, counts)
             deduction_cols.append(col_name)
@@ -443,9 +370,9 @@ def build_column_metadata(ws, template_entries=None):
                 "扣分项": col_name,
             }
         else:
-            raw_name = compact_text(ws.cell(header_row, col_idx).value) or f"unnamed_{col_idx}"
+            raw_name = top or bottom or f"unnamed_{col_idx}"
             normalized = key_text(raw_name)
-            if normalized in {"所属单位", "所属/单位", "所属单位"}:
+            if normalized == "所属单位":
                 raw_name = "所属单位"
             col_name = make_unique_name(compact_text(raw_name), counts)
             col_meta[col_name] = {
@@ -460,16 +387,15 @@ def build_column_metadata(ws, template_entries=None):
 
         columns.append(col_name)
 
-    return columns, col_meta, deduction_cols, data_start_row
+    return columns, col_meta, deduction_cols
 
 
 @st.cache_data(show_spinner=False)
-def load_template(file_bytes, file_name, airbus_template_signature=""):
+def load_template(file_bytes, file_name):
     try:
         wb = load_workbook(BytesIO(file_bytes), data_only=True)
         ws = wb[wb.sheetnames[0]]
-        template_entries = load_airbus_template_entries()
-        columns, col_meta, deduction_cols, data_start_row = build_column_metadata(ws, template_entries)
+        columns, col_meta, deduction_cols = build_column_metadata(ws)
 
         metadata_cols = [
             col
@@ -486,7 +412,7 @@ def load_template(file_bytes, file_name, airbus_template_signature=""):
         last_values = {col: "" for col in fill_down_cols}
         source_unit = useful_company_from_filename(file_name)
 
-        for row_idx in range(data_start_row, ws.max_row + 1):
+        for row_idx in range(4, ws.max_row + 1):
             row = {}
             has_any = False
             for col_idx, col_name in enumerate(columns, start=1):
@@ -514,12 +440,8 @@ def load_template(file_bytes, file_name, airbus_template_signature=""):
         df = pd.DataFrame(records)
 
         name_col = first_existing_column(df, ["姓名"])
-        inspector_col = first_existing_column(df, ["检查员"])
-        if inspector_col:
-            inspector_text = df[inspector_col].astype(str).map(compact_text)
-            df = df[inspector_text != ""]
         if name_col:
-            df[name_col] = df[name_col].astype(str).map(compact_text)
+            df = df[df[name_col].notna() & (df[name_col].astype(str).str.strip() != "")]
 
         unit_col = first_existing_column(df, ["所属单位", "单位"])
         if unit_col and unit_col in df.columns:
@@ -530,19 +452,12 @@ def load_template(file_bytes, file_name, airbus_template_signature=""):
         df["所属单位"] = source_unit
 
         seq_col = first_existing_column(df, ["序号"])
-        date_col = first_existing_column(df, ["日期"])
-        tech_col = first_existing_column(df, ["技术等级", "职务"])
         if seq_col:
             seq = df[seq_col].astype(str).map(compact_text)
         else:
             seq = pd.Series(range(1, len(df) + 1), index=df.index).astype(str)
-        date = df[date_col].astype(str).map(compact_text) if date_col else pd.Series("", index=df.index)
-        tech = df[tech_col].astype(str).map(compact_text) if tech_col else pd.Series("", index=df.index)
-        if name_col:
-            name = df[name_col].astype(str).map(compact_text)
-        else:
-            name = "人员" + seq.astype(str)
-        df["人员ID"] = df["来源文件"].astype(str) + "::" + date.astype(str) + "::" + seq + "::" + name + "::" + tech.astype(str)
+        name = df[name_col].astype(str).map(compact_text) if name_col else seq
+        df["人员ID"] = df["来源文件"].astype(str) + "::" + seq + "::" + name
 
         return df.reset_index(drop=True), col_meta, deduction_cols
     except Exception as exc:
@@ -562,45 +477,19 @@ def prepare_analysis(raw_data, col_meta, deduction_cols):
         return df, df.copy(), pd.DataFrame(), pd.DataFrame(), {}
 
     numeric = df[deduction_cols].apply(pd.to_numeric, errors="coerce").fillna(0)
-    deduction_values = pd.DataFrame(0.0, index=df.index, columns=deduction_cols)
-    deduction_counts = pd.DataFrame(0.0, index=df.index, columns=deduction_cols)
-
-    for col in deduction_cols:
-        vals = numeric[col]
-        score = to_number(col_meta.get(col, {}).get("标准分值", np.nan))
-        direct_mask = vals < 0
-        count_mask = vals > 0
-
-        deduction_values.loc[direct_mask, col] = vals.loc[direct_mask]
-        if not np.isnan(score):
-            deduction_values.loc[count_mask, col] = vals.loc[count_mask] * score
-        else:
-            deduction_values.loc[count_mask, col] = -vals.loc[count_mask]
-
-        deduction_counts.loc[direct_mask, col] = 1
-        deduction_counts.loc[count_mask, col] = vals.loc[count_mask]
-
-    df["扣分总和"] = deduction_values.sum(axis=1)
+    negative = numeric.where(numeric < 0, 0)
+    df["扣分总和"] = negative.sum(axis=1)
     df["失分"] = -df["扣分总和"]
     df["最终得分"] = 100 + df["扣分总和"]
-    df["扣分项数量"] = deduction_counts.sum(axis=1)
+    df["扣分项数量"] = (negative < 0).sum(axis=1)
 
     name_col = first_existing_column(df, ["姓名"])
     tech_col = first_existing_column(df, ["技术等级", "职务"])
     inspector_col = first_existing_column(df, ["检查员"])
-    score_col = first_existing_column(df, ["实际得分", "填表得分", "得分", "总得分", "签批得分"])
-    seq_col = first_existing_column(df, ["序号"])
+    score_col = first_existing_column(df, ["得分", "总得分"])
 
-    if name_col:
-        df["姓名"] = df[name_col].map(compact_text)
-    elif seq_col:
-        df["姓名"] = "人员" + df[seq_col].astype(str).map(compact_text)
-    else:
-        df["姓名"] = df["人员ID"].astype(str)
-    df["技术等级"] = df.apply(
-        lambda row: resolve_role(row, tech_col),
-        axis=1,
-    )
+    df["姓名"] = df[name_col].map(compact_text) if name_col else ""
+    df["技术等级"] = df[tech_col].map(normalize_role) if tech_col else "机长"
     df["操纵者"] = df["技术等级"]
     df["检查员"] = df[inspector_col].map(compact_text) if inspector_col else ""
     df["模板得分"] = pd.to_numeric(df[score_col], errors="coerce") if score_col else np.nan
@@ -658,7 +547,7 @@ def prepare_analysis(raw_data, col_meta, deduction_cols):
         subject_to_cols.setdefault(subject_no, []).append(col)
 
     for subject_no, cols in subject_to_cols.items():
-        checker_df[f"{subject_no}_失分"] = -deduction_values.loc[checker_df.index, cols].sum(axis=1)
+        checker_df[f"{subject_no}_失分"] = -negative.loc[checker_df.index, cols].sum(axis=1)
 
     subject_loss_cols = [f"{subject_no}_失分" for subject_no in subject_to_cols]
     subject_avg = (
@@ -692,13 +581,11 @@ def prepare_analysis(raw_data, col_meta, deduction_cols):
 
     records = []
     for col in ordered_deduction_cols:
-        vals = deduction_values.loc[checker_df.index, col].fillna(0)
-        counts = deduction_counts.loc[checker_df.index, col].fillna(0)
+        vals = pd.to_numeric(checker_df[col], errors="coerce").fillna(0)
         negatives = vals[vals < 0]
         meta = col_meta.get(col, {})
         for idx, val in negatives.items():
             row = checker_df.loc[idx]
-            count_value = float(counts.loc[idx]) if idx in counts.index else 1.0
             records.append(
                 {
                     "记录ID": idx,
@@ -716,7 +603,6 @@ def prepare_analysis(raw_data, col_meta, deduction_cols):
                     "扣分项": meta.get("扣分项", col),
                     "列顺序": meta.get("列顺序", 9999),
                     "标准分值": meta.get("标准分值", np.nan),
-                    "扣分次数": count_value,
                     "扣分值": float(val),
                     "失分": float(abs(val)),
                 }
@@ -767,7 +653,7 @@ def aggregate_loss_by_item(deductions, group_cols=None, sort_by_loss=True, all_i
             deductions.groupby(group_cols, dropna=False)
             .agg(
                 总失分=("失分", "sum"),
-                扣分次数=("扣分次数", "sum"),
+                扣分次数=("扣分项", "size"),
                 科目排序=("科目排序", "min"),
                 列顺序=("列顺序", "min"),
             )
@@ -796,7 +682,7 @@ def identify_weak_areas(deductions, group_cols=None, denominator=1):
     out = (
         deductions.groupby(group_cols, dropna=False)
         .agg(
-            扣分次数=("扣分次数", "sum"),
+            扣分次数=("扣分项", "size"),
             总失分=("失分", "sum"),
             平均单次失分=("失分", "mean"),
             科目排序=("科目排序", "min"),
@@ -837,15 +723,146 @@ def figure_height(rows, minimum=420, per_row=30, maximum=900):
 
 
 def fig_score_distribution(df, title="测试人员平均得分分布"):
-    fig = px.histogram(
-        df,
-        x="最终得分",
-        nbins=18,
+    """显示每个飞行员的实际得分分布，按分数从低到高排列"""
+    if df.empty:
+        return None
+    
+    # 准备数据：按得分排序
+    plot_df = df.copy()
+    plot_df = plot_df.sort_values("最终得分", ascending=True).reset_index(drop=True)
+    plot_df["人员序号"] = plot_df.index + 1
+    
+    # 创建条形图显示每个飞行员的得分
+    fig = px.bar(
+        plot_df,
+        x="人员序号",
+        y="最终得分",
         title=title,
-        labels={"最终得分": "平均得分", "count": "人数"},
-        color_discrete_sequence=["#2F80ED"],
+        labels={"人员序号": "飞行员（按得分从低到高排列）", "最终得分": "平均得分"},
+        text=plot_df["最终得分"].map(lambda x: f"{x:.2f}"),
     )
-    fig.update_layout(height=400, bargap=0.05)
+    fig.update_traces(marker_color=OVERALL_SCORE_COLOR)
+    
+    # 添加参考线：平均分
+    avg_score = df["最终得分"].mean()
+    fig.add_hline(
+        y=avg_score, 
+        line_dash="dash", 
+        line_color=AVERAGE_LINE_COLOR,
+    )
+    fig.add_annotation(
+        x=1,
+        xref="paper",
+        y=avg_score,
+        yref="y",
+        text=f"平均分: {avg_score:.2f}",
+        showarrow=False,
+        xanchor="right",
+        yanchor="bottom",
+        yshift=8,
+        bgcolor="rgba(255,255,255,0.92)",
+        bordercolor=AVERAGE_LINE_COLOR,
+        borderwidth=1,
+        font=dict(color="#333333", size=12),
+    )
+    
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False,
+        hovertemplate="<b>%{customdata}</b><br>得分: %{y:.2f}<extra></extra>",
+        customdata=plot_df["姓名"] if "姓名" in plot_df.columns else None
+    )
+    
+    # 设置y轴范围
+    y_min = max(0, plot_df["最终得分"].min() - 5)
+    y_max = min(105, max(plot_df["最终得分"].max(), avg_score) + 8)
+    
+    fig.update_layout(
+        height=430,
+        xaxis_title="飞行员（按得分从低到高排列）",
+        yaxis_title="平均得分",
+        yaxis=dict(
+            range=[y_min, y_max],
+            dtick=5
+        ),
+        margin=dict(l=40, r=40, t=50, b=60)
+    )
+    
+    return fig
+
+
+def fig_score_distribution_by_role(df, role_type="机长", color_scale=None):
+    """按角色（机长/副驾驶）显示分数分布"""
+    if df.empty:
+        return None
+    
+    # 筛选数据
+    role_df = df[df["操纵者"] == role_type].copy()
+    if role_df.empty:
+        return None
+    
+    # 按得分排序
+    role_df = role_df.sort_values("最终得分", ascending=True).reset_index(drop=True)
+    role_df["人员序号"] = role_df.index + 1
+    
+    role_color = CAPTAIN_COLOR if role_type == "机长" else FIRST_OFFICER_COLOR
+    
+    # 创建条形图
+    fig = px.bar(
+        role_df,
+        x="人员序号",
+        y="最终得分",
+        title=f"{role_type}分数分布",
+        labels={"人员序号": f"{role_type}（按得分从低到高排列）", "最终得分": "平均得分"},
+        text=role_df["最终得分"].map(lambda x: f"{x:.2f}"),
+    )
+    fig.update_traces(marker_color=role_color)
+    
+    # 添加平均分参考线
+    avg_score = role_df["最终得分"].mean()
+    fig.add_hline(
+        y=avg_score,
+        line_dash="dash",
+        line_color=AVERAGE_LINE_COLOR,
+    )
+    fig.add_annotation(
+        x=1,
+        xref="paper",
+        y=avg_score,
+        yref="y",
+        text=f"平均分: {avg_score:.2f}",
+        showarrow=False,
+        xanchor="right",
+        yanchor="bottom",
+        yshift=8,
+        bgcolor="rgba(255,255,255,0.92)",
+        bordercolor=AVERAGE_LINE_COLOR,
+        borderwidth=1,
+        font=dict(color="#333333", size=12),
+    )
+    
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False,
+        hovertemplate="<b>%{customdata}</b><br>得分: %{y:.2f}<extra></extra>",
+        customdata=role_df["姓名"] if "姓名" in role_df.columns else None
+    )
+    
+    # 设置y轴范围
+    y_min = max(0, role_df["最终得分"].min() - 5)
+    y_max = min(105, max(role_df["最终得分"].max(), avg_score) + 8)
+    
+    fig.update_layout(
+        height=400,
+        xaxis_title=f"{role_type}（按得分从低到高排列）",
+        yaxis_title="平均得分",
+        yaxis=dict(
+            range=[y_min, y_max],
+            dtick=5
+        ),
+        margin=dict(l=40, r=40, t=60, b=50)
+    )
+    
     return fig
 
 
@@ -856,6 +873,12 @@ def fig_participants_by_company(pilot_df):
         .reset_index(name="人数")
         .sort_values(["所属单位", "操纵者"])
     )
+    # 绘图顺序用于堆叠：副驾驶先画在下方，机长后画在上方；图例再单独排序。
+    stack_order = ["副驾驶", "机长"]
+    legend_order = ["机长", "副驾驶"]
+    counts["操纵者"] = pd.Categorical(counts["操纵者"], categories=stack_order, ordered=True)
+    counts = counts.sort_values(["所属单位", "操纵者"])
+    
     fig = px.bar(
         counts,
         x="所属单位",
@@ -863,8 +886,11 @@ def fig_participants_by_company(pilot_df):
         color="操纵者",
         text="人数",
         title="参加测试人数（按单位与技术等级）",
-        color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
+        color_discrete_sequence=[FIRST_OFFICER_COLOR, CAPTAIN_COLOR],
+        category_orders={"操纵者": stack_order},
     )
+    for trace in fig.data:
+        trace.legendrank = legend_order.index(trace.name) + 1 if trace.name in legend_order else 99
     fig.update_traces(textposition="inside")
     fig.update_layout(height=430, barmode="stack", yaxis_title="人数")
     return fig
@@ -878,7 +904,7 @@ def fig_company_overall_scores(pilot_df):
         y="最终得分",
         text=stats["最终得分"].map(lambda x: f"{x:.1f}"),
         title="各航司整体平均得分",
-        color_discrete_sequence=["#27AE60"],
+        color_discrete_sequence=[OVERALL_SCORE_COLOR],
     )
     fig.update_traces(textposition="outside")
     fig.update_layout(height=430, yaxis_title="平均得分")
@@ -892,6 +918,11 @@ def fig_company_role_scores(pilot_df):
         .round(2)
         .reset_index()
     )
+    # 机长在左（绿色），副驾驶在右（蓝色）
+    role_order = ["机长", "副驾驶"]
+    stats["操纵者"] = pd.Categorical(stats["操纵者"], categories=role_order, ordered=True)
+    stats = stats.sort_values(["所属单位", "操纵者"])
+    
     fig = px.bar(
         stats,
         x="所属单位",
@@ -900,7 +931,8 @@ def fig_company_role_scores(pilot_df):
         text=stats["最终得分"].map(lambda x: f"{x:.1f}"),
         barmode="group",
         title="机长 / 副驾驶平均得分",
-        color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
+        color_discrete_sequence=[CAPTAIN_COLOR, FIRST_OFFICER_COLOR],
+        category_orders={"操纵者": role_order},
     )
     fig.update_traces(textposition="outside")
     fig.update_layout(height=430, yaxis_title="平均得分")
@@ -939,6 +971,12 @@ def fig_company_subject_loss(deductions, pilot_df):
     stats["科目排序"] = stats["科目编号"].map(SUBJECT_SORT_MAP)
     stats = stats.sort_values(["所属单位", "科目排序"])
     
+    # 图例顺序：科目一到科目五；绘图顺序反转以保证水平分组从上到下显示为科目一到科目五。
+    subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
+    plot_subject_order = list(reversed(subject_order))
+    subject_legend_rank = {name: idx + 1 for idx, name in enumerate(subject_order)}
+    subject_color_map = {f"{no}_{name}": SUBJECT_COLORS.get(no, "#828282") for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS}
+    
     # 创建水平条形图
     fig = px.bar(
         stats,
@@ -949,9 +987,11 @@ def fig_company_subject_loss(deductions, pilot_df):
         barmode="group",
         text=stats["人均失分"].map(lambda x: f"{x:.1f}"),
         title="各航司五个科目平均失分",
-        category_orders={"科目显示": [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]},
-        color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
+        category_orders={"科目显示": plot_subject_order},
+        color_discrete_sequence=[subject_color_map.get(name, "#828282") for name in plot_subject_order],
     )
+    for trace in fig.data:
+        trace.legendrank = subject_legend_rank.get(trace.name, 99)
     fig.update_traces(textposition="outside")
     fig.update_layout(
         height=figure_height(stats["所属单位"].nunique(), 430, 60),
@@ -1047,6 +1087,10 @@ def fig_subject_top3(deductions):
     top3["排序值"] = top3["总扣分值"].abs()
     plot_data = top3.sort_values(["科目排序", "排序值"], ascending=[True, True])
     
+    # 使用科目颜色
+    subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
+    color_map = {f"{no}_{name}": SUBJECT_COLORS.get(no, "#828282") for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS}
+    
     fig = px.bar(
         plot_data,
         y="图表标签",
@@ -1057,9 +1101,9 @@ def fig_subject_top3(deductions):
         title="各科目失分 TOP 3",
         category_orders={
             "图表标签": plot_data["图表标签"].tolist(),
-            "科目显示": [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS],
+            "科目显示": subject_order,
         },
-        color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
+        color_discrete_sequence=[color_map.get(s, "#828282") for s in subject_order],
     )
     fig.update_traces(
         textposition="outside", 
@@ -1098,6 +1142,10 @@ def fig_subject_role_loss(subject_deductions, subject_no, all_items=None, roles=
             .reset_index()
         )
     roles = roles or sorted(subject_deductions["操纵者"].dropna().astype(str).unique().tolist())
+    # 确保机长在左，副驾驶在右
+    role_order = ["机长", "副驾驶"]
+    roles = [r for r in role_order if r in roles] + [r for r in roles if r not in role_order]
+    
     if all_items is not None and not all_items.empty:
         roles = roles or ["机长", "副驾驶"]
         base = all_items[["扣分项", "列顺序"]].drop_duplicates("扣分项")
@@ -1116,24 +1164,32 @@ def fig_subject_role_loss(subject_deductions, subject_no, all_items=None, roles=
     data["排序值"] = data["总扣分值"].abs()
     item_order = data.groupby("扣分项")["列顺序"].min().sort_values().index.tolist()
     
+    # 确保操纵者顺序：机长在前，副驾驶在后
+    data["操纵者"] = pd.Categorical(data["操纵者"], categories=role_order, ordered=True)
+    data = data.sort_values(["扣分项", "操纵者"])
+    
     fig = px.bar(
         data,
         y="扣分项",
         x="排序值",
         color="操纵者",
         orientation="h",
-        category_orders={"扣分项": item_order},
+        category_orders={"扣分项": item_order, "操纵者": role_order},
         title=f"{subject_no} 按操纵者划分失分",
-        color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
+        color_discrete_sequence=[CAPTAIN_COLOR, FIRST_OFFICER_COLOR],
         text=data["总扣分值"].map(lambda x: f"{x:.0f}" if x != 0 else ""),
+        custom_data=["总扣分值"],
     )
     fig.update_traces(
         textposition="outside",
+        textangle=0,
+        constraintext="none",
         cliponaxis=False,
-        hovertemplate="<b>%{y}</b><br>扣分值: %{customdata:.0f}<extra></extra>",
-        customdata=data["总扣分值"]
+        hovertemplate="<b>%{y}</b><br>扣分值: %{customdata[0]:.0f}<extra></extra>",
     )
     x_max = data["排序值"].max()
+    if not np.isfinite(x_max) or x_max <= 0:
+        x_max = 1
     tick_vals = []
     tick_labels = []
     for v in range(0, int(x_max) + 1, max(1, int(x_max // 5))):
@@ -1141,15 +1197,16 @@ def fig_subject_role_loss(subject_deductions, subject_no, all_items=None, roles=
         tick_labels.append(f"-{v}" if v > 0 else "0")
     fig.update_layout(
         height=figure_height(len(item_order), 430),
-        margin=dict(l=320, r=40, t=70, b=40),
+        margin=dict(l=320, r=100, t=70, b=40),
         xaxis_title="总扣分值",
         yaxis_title="",
         barmode="stack",
+        uniformtext=dict(mode="show", minsize=10),
         xaxis=dict(
             tickmode="array",
             tickvals=tick_vals,
             ticktext=tick_labels,
-            range=[0, x_max * 1.05]
+            range=[0, x_max * 1.25]
         )
     )
     return fig
@@ -1303,13 +1360,7 @@ with st.sidebar:
         accept_multiple_files=True,
     )
     st.markdown("### 评分规则")
-    st.markdown(
-        "- 基础分：100分\n"
-        "- 飞行员得分：各检查员评分平均值\n"
-        "- 扣分统计：使用检查员原始扣分记录\n"
-        "- 科目识别：按代码内置空客模板中的科目、评分项目、扣分标准匹配\n"
-        "- 正数按扣分次数计算：次数 × 对应标准分值；负数直接作为扣分值"
-    )
+    st.markdown("- 基础分：100分\n- 飞行员得分：各检查员评分平均值\n- 扣分统计：使用检查员原始扣分记录")
 
 
 if uploaded_files:
@@ -1320,7 +1371,7 @@ if uploaded_files:
 
     for file in uploaded_files:
         with st.spinner(f"正在处理：{file.name}"):
-            df, col_meta, deduction_cols = load_template(file.getvalue(), file.name, template_signature())
+            df, col_meta, deduction_cols = load_template(file.getvalue(), file.name)
             if not df.empty:
                 all_data_list.append(df)
                 all_meta.update(col_meta)
@@ -1377,7 +1428,24 @@ if uploaded_files:
         with score_col2:
             st.plotly_chart(fig_company_role_scores(filtered_pilots), use_container_width=True)
 
+        # 显示主图：所有飞行员的分数分布
         st.plotly_chart(fig_score_distribution(filtered_pilots), use_container_width=True)
+
+        # 显示机长和副驾驶的分数分布
+        if not filtered_pilots.empty:
+            role_col1, role_col2 = st.columns(2)
+            with role_col1:
+                fig_captain = fig_score_distribution_by_role(filtered_pilots, "机长")
+                if fig_captain:
+                    st.plotly_chart(fig_captain, use_container_width=True)
+                else:
+                    st.info("无机长数据")
+            with role_col2:
+                fig_first_officer = fig_score_distribution_by_role(filtered_pilots, "副驾驶")
+                if fig_first_officer:
+                    st.plotly_chart(fig_first_officer, use_container_width=True)
+                else:
+                    st.info("无副驾驶数据")
 
         st.markdown("#### 各单位得分统计")
         shown_company_df = company_stats(filtered_pilots)
@@ -1576,7 +1644,7 @@ else:
     with st.expander("文件格式说明"):
         st.markdown(
             """
-            支持按《华东飞行员双盲测试数据采集表》模板填写的 Excel 文件。系统按代码内置空客模板中的科目、评分项目、扣分标准和标准分值识别扣分项，不依赖固定列号，也不需要额外读取模板文件，并将扣分项命名为：
+            支持按《华东飞行员双盲测试数据采集表》模板填写的 Excel 文件。系统会自动识别模板中的科目、评分项目和扣分标准，并将扣分项命名为：
 
             `科目X_评分项目_扣分项`
 
