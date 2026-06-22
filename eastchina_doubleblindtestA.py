@@ -246,9 +246,9 @@ SUBJECT_START_ITEMS = OrderedDict(
     [
         ("高度偏差", ("科目一", "大坡度盘旋")),
         ("起飞抬头率", ("科目二", "大侧风目视起落")),
-        ("滑跑方向", ("科目三", "选择的非精密进近")),
-        ("中断动作", ("科目四", "中断着陆+中断着陆后发动机失效")),
-        ("程序", ("科目四", "中断着陆+中断着陆后发动机失效")),
+        ("滑跑方向", ("科目三", "非精密进近+中断着陆")),
+        ("中断动作", ("科目四", "中断着陆后发动机失效")),
+        ("程序", ("科目四", "中断着陆后发动机失效")),
         ("1000ft以下五边剖面控制", ("科目五", "单发ILS无指引落地")),
         ("综合考评", ("综合考评", "综合考评")),
     ]
@@ -1120,12 +1120,12 @@ def fig_company_subject_loss(deductions, pilot_df):
             line=dict(color=AVERAGE_LINE_COLOR, width=2, dash="dash"),
         )
         fig.add_annotation(
-            x=avg_loss,
-            y=company,
+            x=avg_loss + 0.03,
+            y=company_idx,
             text=f"-{avg_loss:.2f}",
             showarrow=False,
             xanchor="left",
-            xshift=6,
+            xshift=3,
             bgcolor="rgba(255,255,255,0.92)",
             bordercolor=AVERAGE_LINE_COLOR,
             borderwidth=1,
