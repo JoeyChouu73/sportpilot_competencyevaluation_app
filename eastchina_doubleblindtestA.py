@@ -49,8 +49,8 @@ META_KEYWORDS = [
 SUBJECT_DEFS = [
     ("科目一", "大坡度盘旋"),
     ("科目二", "大侧风目视起落"),
-    ("科目三", "非精密进近+中断着陆"),
-    ("科目四", "中断着陆后发动机失效"),
+    ("科目三", "选择的非精密进近"),
+    ("科目四", "中断着陆+中断着陆后发动机失效"),
     ("科目五", "单发ILS无指引落地"),
     ("综合考评", "综合考评"),
 ]
@@ -1084,6 +1084,7 @@ def fig_company_subject_loss(deductions, pilot_df):
     # 按科目编号排序（科目一到科目五）
     stats["科目排序"] = stats["科目编号"].map(SUBJECT_SORT_MAP)
     stats = stats.sort_values(["所属单位", "科目排序"])
+    company_order = stats["所属单位"].drop_duplicates().tolist()
     
     # 图例顺序：科目一到科目五；绘图顺序反转以保证水平分组从上到下显示为科目一到科目五。
     subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
@@ -1101,11 +1102,35 @@ def fig_company_subject_loss(deductions, pilot_df):
         barmode="group",
         text=stats["人均失分"].map(lambda x: f"-{x:.1f}" if x != 0 else ""),
         title="各航司五个科目平均失分",
-        category_orders={"科目显示": plot_subject_order},
+        category_orders={"科目显示": plot_subject_order, "所属单位": company_order},
         color_discrete_sequence=[subject_color_map.get(name, "#828282") for name in plot_subject_order],
     )
     for trace in fig.data:
         trace.legendrank = subject_legend_rank.get(trace.name, 99)
+    company_avg = stats.groupby("所属单位", dropna=False)["人均失分"].mean().reindex(company_order)
+    for company_idx, (company, avg_loss) in enumerate(company_avg.items()):
+        fig.add_shape(
+            type="line",
+            x0=avg_loss,
+            x1=avg_loss,
+            y0=company_idx - 0.42,
+            y1=company_idx + 0.42,
+            xref="x",
+            yref="y",
+            line=dict(color=AVERAGE_LINE_COLOR, width=2, dash="dash"),
+        )
+        fig.add_annotation(
+            x=avg_loss,
+            y=company,
+            text=f"-{avg_loss:.2f}",
+            showarrow=False,
+            xanchor="left",
+            xshift=6,
+            bgcolor="rgba(255,255,255,0.92)",
+            bordercolor=AVERAGE_LINE_COLOR,
+            borderwidth=1,
+            font=dict(color="#333333", size=12),
+        )
     fig.update_traces(textposition="outside")
     fig.update_layout(
         height=figure_height(stats["所属单位"].nunique(), 430, 60),
@@ -1141,6 +1166,7 @@ def fig_subject_company_comparison(deductions, pilot_df):
         return None
 
     subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
+    subject_avg = stats.groupby("科目显示", dropna=False)["人均失分"].mean().reindex(subject_order)
     fig = px.bar(
         stats,
         x="科目显示",
@@ -1152,12 +1178,36 @@ def fig_subject_company_comparison(deductions, pilot_df):
         category_orders={"科目显示": subject_order},
         color_discrete_sequence=DEFAULT_COLOR_SEQUENCE,
     )
+    for subject_idx, (subject, avg_loss) in enumerate(subject_avg.dropna().items()):
+        fig.add_shape(
+            type="line",
+            x0=subject_idx - 0.42,
+            x1=subject_idx + 0.42,
+            y0=avg_loss,
+            y1=avg_loss,
+            xref="x",
+            yref="y",
+            line=dict(color=AVERAGE_LINE_COLOR, width=2, dash="dash"),
+        )
+        fig.add_annotation(
+            x=subject,
+            y=avg_loss,
+            text=f"-{avg_loss:.2f}",
+            showarrow=False,
+            yanchor="bottom",
+            yshift=6,
+            bgcolor="rgba(255,255,255,0.92)",
+            bordercolor=AVERAGE_LINE_COLOR,
+            borderwidth=1,
+            font=dict(color="#333333", size=12),
+        )
     fig.update_traces(textposition="outside", cliponaxis=False)
+    y_max = max(stats["人均失分"].max(), subject_avg.max()) if not subject_avg.dropna().empty else stats["人均失分"].max()
     fig.update_layout(
         height=500,
         xaxis_title="科目",
         yaxis_title="人均扣分值",
-        yaxis=dict(tickprefix="-"),
+        yaxis=dict(tickprefix="-", range=[0, y_max * 1.18 if y_max > 0 else 1]),
         margin=dict(l=60, r=60, t=80, b=80),
     )
     return fig
@@ -1447,7 +1497,7 @@ def fig_subject_top3(deductions):
     top3["总扣分值"] = negative_deduction_values(top3["总失分"])
     top3["图表标签"] = top3["扣分项"]
     top3["排序值"] = top3["总扣分值"].abs()
-    plot_data = top3.sort_values(["科目排序", "排序值"], ascending=[True, True])
+    plot_data = top3.sort_values(["科目排序", "排序值"], ascending=[True, False])
     
     # 使用科目颜色
     subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
