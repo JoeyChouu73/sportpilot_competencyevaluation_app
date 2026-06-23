@@ -370,6 +370,36 @@ def useful_company_from_filename(file_name):
     return stem
 
 
+def source_unit_from_sheet(ws, fallback=""):
+    """优先从表格标题或“所属单位”字段提取单位，保留东航320等机型标识。"""
+    fallback = compact_text(fallback)
+
+    for row_idx in range(1, min(ws.max_row, 8) + 1):
+        row_values = [compact_text(ws.cell(row_idx, col_idx).value) for col_idx in range(1, min(ws.max_column, 12) + 1)]
+
+        for col_idx, text in enumerate(row_values):
+            if not text:
+                continue
+            if "所属单位" in text or "所属 单位" in text:
+                inline = re.sub(r".*所属\s*单位[:：]", "", text).strip()
+                if inline and key_text(inline) not in {"所属单位", "单位"}:
+                    return inline
+                for next_text in row_values[col_idx + 1:]:
+                    if next_text and key_text(next_text) not in {"所属单位", "单位"}:
+                        return next_text
+
+        title_text = " ".join([v for v in row_values if v])
+        if title_text:
+            title_text = re.sub(r"[（）()【】\[\]]", " ", title_text)
+            title_text = re.sub(r"华东飞行员双盲测试数据采集表|飞行员双盲测试数据采集表|双盲测试数据采集表|数据采集表|评分表|测试|原始数据", " ", title_text)
+            candidates = [c.strip("_- 　") for c in re.split(r"[_\s\-]+", title_text) if c.strip("_- 　")]
+            for item in reversed(candidates):
+                if len(item) >= 2 and not re.fullmatch(r"[A-Za-z0-9.]+", item):
+                    return item
+
+    return fallback
+
+
 def first_existing_column(df, names):
     lookup = {key_text(col): col for col in df.columns}
     for name in names:
@@ -487,7 +517,7 @@ def load_template(file_bytes, file_name):
 
         records = []
         last_values = {col: "" for col in fill_down_cols}
-        source_unit = useful_company_from_filename(file_name)
+        source_unit = source_unit_from_sheet(ws, useful_company_from_filename(file_name))
 
         for row_idx in range(4, ws.max_row + 1):
             row = {}
@@ -524,7 +554,7 @@ def load_template(file_bytes, file_name):
         if unit_col and unit_col in df.columns:
             internal_unit = df[unit_col].dropna().astype(str).map(compact_text)
             internal_unit = internal_unit[internal_unit != ""]
-            if source_unit == Path(file_name).stem and not internal_unit.empty:
+            if not internal_unit.empty:
                 source_unit = internal_unit.mode().iloc[0]
         df["所属单位"] = source_unit
 
@@ -780,13 +810,29 @@ def identify_weak_areas(deductions, group_cols=None, denominator=1):
 def company_stats(pilot_df):
     if pilot_df.empty:
         return pd.DataFrame()
-    return (
+
+    stats = (
         pilot_df.groupby("所属单位")["最终得分"]
         .agg(人数="count", 平均分="mean", 最高分="max", 最低分="min", 标准差="std")
-        .round(2)
         .reset_index()
-        .rename(columns={"所属单位": "单位名称"})
     )
+
+    avg_share = (
+        pilot_df.groupby("所属单位", dropna=False)
+        .apply(lambda g: (g["最终得分"] >= g["最终得分"].mean()).mean() * 100)
+        .reset_index(name="达到本单位平均分占比")
+    )
+
+    stats = stats.merge(avg_share, on="所属单位", how="left")
+    stats["达到本单位平均分占比"] = stats.apply(
+        lambda row: f"≥{row['平均分']:.2f}分：{row['达到本单位平均分占比']:.1f}%",
+        axis=1,
+    )
+
+    for col in ["平均分", "最高分", "最低分", "标准差"]:
+        stats[col] = stats[col].round(2)
+
+    return stats.rename(columns={"所属单位": "单位名称"})
 
 
 def company_test_counts(pilot_df):
@@ -813,6 +859,32 @@ def negative_deduction_values(values):
 
 def figure_height(rows, minimum=420, per_row=30, maximum=900):
     return int(min(max(minimum, rows * per_row + 180), maximum))
+
+
+def average_score_share_text(df, subject_label):
+    if df.empty:
+        return ""
+    avg_score = df["最终得分"].mean()
+    share = (df["最终得分"] >= avg_score).mean() * 100
+    return f"大于等于平均分{avg_score:.2f}的{subject_label}占比{share:.1f}%"
+
+
+def add_average_share_note(fig, df, subject_label):
+    note = average_score_share_text(df, subject_label)
+    if not note:
+        return fig
+    fig.add_annotation(
+        x=0.5,
+        xref="paper",
+        y=1.08,
+        yref="paper",
+        text=note,
+        showarrow=False,
+        xanchor="center",
+        yanchor="bottom",
+        font=dict(color="#666666", size=12),
+    )
+    return fig
 
 
 def fig_score_distribution(df, title="测试人员平均得分分布"):
@@ -859,6 +931,8 @@ def fig_score_distribution(df, title="测试人员平均得分分布"):
         font=dict(color="#333333", size=12),
     )
     
+    add_average_share_note(fig, df, "测试人员")
+
     fig.update_traces(
         textposition="outside",
         cliponaxis=False,
@@ -878,7 +952,7 @@ def fig_score_distribution(df, title="测试人员平均得分分布"):
             range=[y_min, y_max],
             dtick=5
         ),
-        margin=dict(l=40, r=40, t=50, b=60)
+        margin=dict(l=40, r=40, t=75, b=60)
     )
     
     return fig
@@ -934,6 +1008,8 @@ def fig_score_distribution_by_role(df, role_type="机长", color_scale=None):
         font=dict(color="#333333", size=12),
     )
     
+    add_average_share_note(fig, role_df, role_type)
+
     fig.update_traces(
         textposition="outside",
         cliponaxis=False,
@@ -953,7 +1029,7 @@ def fig_score_distribution_by_role(df, role_type="机长", color_scale=None):
             range=[y_min, y_max],
             dtick=5
         ),
-        margin=dict(l=40, r=40, t=60, b=50)
+        margin=dict(l=40, r=40, t=80, b=50)
     )
     
     return fig
@@ -1056,43 +1132,61 @@ def fig_company_role_scores(pilot_df):
 
 def fig_company_subject_loss(deductions, pilot_df):
     """
-    各航司各科目平均失分统计
-    计算逻辑：某航司某科目全部扣分值的总和 ÷ 该公司参与测试的人员数量
-    科目按科目一到科目五从上到下排列
+    各航司五个科目平均失分统计
+    计算逻辑：
+    1. 某航司某科目人均失分 = 该航司该科目总失分 ÷ 该航司测试人数
+    2. 均分线 = 该航司五个科目人均失分的平均值
     """
     if deductions.empty or pilot_df.empty:
         return None
-    
-    # 获取每个航司的数据文件受测人数（按飞行员去重）
+
     company_people_count = company_test_counts(pilot_df)
-    
-    # 计算每个航司每个科目的总失分
+    company_order = company_people_count["所属单位"].dropna().astype(str).tolist()
+
+    subject_base = pd.DataFrame(
+        [
+            {
+                "科目编号": no,
+                "科目名称": name,
+                "科目显示": f"{no}_{name}",
+                "科目排序": SUBJECT_SORT_MAP.get(no, 999),
+            }
+            for no, name in SUBJECT_DEFS
+            if no in FLIGHT_SUBJECTS
+        ]
+    )
+
+    base = company_people_count[["所属单位", "测试人数"]].merge(subject_base, how="cross")
+
     subject_loss_by_company = (
         deductions[deductions["科目编号"].isin(FLIGHT_SUBJECTS)]
-        .groupby(["所属单位", "科目编号", "科目名称"])
+        .groupby(["所属单位", "科目编号", "科目名称"], dropna=False)
         .agg(总失分=("失分", "sum"))
         .reset_index()
     )
-    
-    # 合并计算人均失分
-    stats = subject_loss_by_company.merge(company_people_count, on="所属单位", how="left")
-    stats["人均失分"] = (stats["总失分"] / stats["测试人数"].replace(0, np.nan)).fillna(0).round(2)
-    
-    # 添加科目显示名称（科目编号_科目名称）
-    stats["科目显示"] = stats["科目编号"] + "_" + stats["科目名称"]
-    
-    # 按科目编号排序（科目一到科目五）
-    stats["科目排序"] = stats["科目编号"].map(SUBJECT_SORT_MAP)
+
+    stats = base.merge(
+        subject_loss_by_company,
+        on=["所属单位", "科目编号", "科目名称"],
+        how="left",
+    )
+
+    stats["总失分"] = stats["总失分"].fillna(0)
+    stats["人均失分"] = (
+        stats["总失分"] / stats["测试人数"].replace(0, np.nan)
+    ).fillna(0).round(2)
+
     stats = stats.sort_values(["所属单位", "科目排序"])
-    company_order = stats["所属单位"].drop_duplicates().tolist()
-    
-    # 图例顺序：科目一到科目五；绘图顺序反转以保证水平分组从上到下显示为科目一到科目五。
+
     subject_order = [f"{no}_{name}" for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS]
     plot_subject_order = list(reversed(subject_order))
     subject_legend_rank = {name: idx + 1 for idx, name in enumerate(subject_order)}
-    subject_color_map = {f"{no}_{name}": SUBJECT_COLORS.get(no, "#828282") for no, name in SUBJECT_DEFS if no in FLIGHT_SUBJECTS}
-    
-    # 创建水平条形图
+    subject_color_map = {
+        f"{no}_{name}": SUBJECT_COLORS.get(no, "#828282")
+        for no, name in SUBJECT_DEFS
+        if no in FLIGHT_SUBJECTS
+    }
+
     fig = px.bar(
         stats,
         y="所属单位",
@@ -1102,41 +1196,75 @@ def fig_company_subject_loss(deductions, pilot_df):
         barmode="group",
         text=stats["人均失分"].map(lambda x: f"-{x:.1f}" if x != 0 else ""),
         title="各航司五个科目平均失分",
-        category_orders={"科目显示": plot_subject_order, "所属单位": company_order},
-        color_discrete_sequence=[subject_color_map.get(name, "#828282") for name in plot_subject_order],
+        category_orders={
+            "所属单位": company_order,
+            "科目显示": plot_subject_order,
+        },
+        color_discrete_map=subject_color_map,
     )
+
     for trace in fig.data:
         trace.legendrank = subject_legend_rank.get(trace.name, 99)
-    company_avg = stats.groupby("所属单位", dropna=False)["人均失分"].mean().reindex(company_order)
-    for company_idx, (company, avg_loss) in enumerate(company_avg.items()):
+
+    # 关键：固定 y 轴分类顺序，并反转显示，使 idx 与公司位置对应
+    fig.update_yaxes(
+        categoryorder="array",
+        categoryarray=company_order,
+        autorange="reversed"
+    )
+
+    company_avg = (
+        stats.groupby("所属单位", dropna=False)["人均失分"]
+        .mean()
+        .reindex(company_order)
+        .round(2)
+    )
+
+    for idx, (company, avg_loss) in enumerate(company_avg.items()):
+
         fig.add_shape(
             type="line",
             x0=avg_loss,
             x1=avg_loss,
-            y0=company_idx - 0.42,
-            y1=company_idx + 0.42,
+            y0=idx - 0.38,
+            y1=idx + 0.38,
             xref="x",
             yref="y",
-            line=dict(color=AVERAGE_LINE_COLOR, width=2, dash="dash"),
+            line=dict(
+                color=AVERAGE_LINE_COLOR,
+                width=3,
+                dash="dash"
+            )
         )
+
         fig.add_annotation(
-            x=avg_loss + 0.03,
-            y=company_idx,
+            x=avg_loss,
+            y=idx,
+            xref="x",
+            yref="y",
             text=f"-{avg_loss:.2f}",
             showarrow=False,
             xanchor="left",
-            xshift=3,
-            bgcolor="rgba(255,255,255,0.92)",
+            xshift=8,
+            bgcolor="white",
             bordercolor=AVERAGE_LINE_COLOR,
-            borderwidth=1,
-            font=dict(color="#333333", size=12),
+            borderwidth=1.5,
+            borderpad=4,
+            font=dict(size=12, color="#333333")
         )
-    fig.update_traces(textposition="outside")
+
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False,
+        selector=dict(type="bar")
+    )
+
     fig.update_layout(
         height=figure_height(stats["所属单位"].nunique(), 430, 60),
         xaxis_title="人均失分",
-        yaxis_title=""
+        yaxis_title="",
     )
+
     return fig
 
 
@@ -1656,7 +1784,8 @@ def build_report_figures(pilot_df, deductions, subject_melt):
     if not deductions.empty and not pilot_df.empty:
         figures.append(("各航司五个科目平均失分", fig_company_subject_loss(deductions, pilot_df)))
     if not deductions.empty:
-        top_items = identify_weak_areas(deductions, ["扣分项"], denominator=max(len(deductions), 1))
+        flight_deductions = deductions[deductions["科目编号"].isin(FLIGHT_SUBJECTS)].copy()
+        top_items = identify_weak_areas(flight_deductions, ["扣分项"], denominator=max(len(flight_deductions), 1))
         figures.append(("总扣分值排名前 5 的扣分项", fig_loss_items_bar(top_items, "总扣分值排名前 5 的扣分项", top_n=5)))
         fig, _ = fig_subject_top3(deductions)
         figures.append(("各科目失分 TOP 3", fig))
@@ -1802,7 +1931,8 @@ if uploaded_files:
         raw_data, all_meta, all_deduction_cols
     )
 
-    weak_areas = identify_weak_areas(deductions, ["扣分项"], denominator=len(raw_data[~raw_data["是否平均行"]]))
+    flight_deductions_all = deductions[deductions["科目编号"].isin(FLIGHT_SUBJECTS)].copy()
+    weak_areas = identify_weak_areas(flight_deductions_all, ["扣分项"], denominator=len(raw_data[~raw_data["是否平均行"]]))
     company_df = company_stats(pilot_data)
 
     with st.sidebar:
@@ -2006,7 +2136,8 @@ if uploaded_files:
             with chart_col1:
                 st.plotly_chart(fig_score_distribution(detail_pilots, "筛选范围得分分布"), use_container_width=True)
             with chart_col2:
-                detail_top = identify_weak_areas(detail_deductions, ["扣分项"], denominator=max(len(detail_deductions), 1))
+                detail_flight_deductions = detail_deductions[detail_deductions["科目编号"].isin(FLIGHT_SUBJECTS)].copy()
+                detail_top = identify_weak_areas(detail_flight_deductions, ["扣分项"], denominator=max(len(detail_flight_deductions), 1))
                 fig = fig_loss_items_bar(detail_top, "筛选范围扣分项 TOP 5", top_n=5)
                 if fig:
                     st.plotly_chart(fig, use_container_width=True)
