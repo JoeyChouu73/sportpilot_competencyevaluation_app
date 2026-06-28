@@ -538,19 +538,50 @@ def part_score_summary(people_df):
     return pd.DataFrame(rows).sort_values("部分排序")
 
 
+def add_item_display_labels(df):
+    out = ensure_columns(df, ["部分", "评分项目", "满分", "列顺序"]).copy()
+    out["列顺序"] = pd.to_numeric(out["列顺序"], errors="coerce")
+    out["满分"] = pd.to_numeric(out["满分"], errors="coerce")
+    part_rank = {part: idx for idx, part in enumerate(PART_ORDER)}
+    out["部分排序"] = out["部分"].map(part_rank).fillna(len(PART_ORDER))
+    out = out.sort_values(["部分排序", "列顺序"]).copy()
+    item_columns = (
+        out[["部分", "评分项目", "列顺序"]]
+        .drop_duplicates()
+        .sort_values(["部分", "评分项目", "列顺序"])
+        .copy()
+    )
+    item_columns["项目序号"] = item_columns.groupby(["部分", "评分项目"], dropna=False).cumcount() + 1
+    item_columns["项目重复数"] = item_columns.groupby(["部分", "评分项目"], dropna=False)["评分项目"].transform("size")
+    out = out.merge(item_columns, on=["部分", "评分项目", "列顺序"], how="left")
+    out["评分项目显示"] = out["评分项目"].astype(str)
+    duplicated = out["项目重复数"] > 1
+    out.loc[duplicated, "评分项目显示"] = (
+        out.loc[duplicated, "评分项目"].astype(str)
+        + " 第"
+        + out.loc[duplicated, "项目序号"].astype(int).astype(str)
+        + "项"
+    )
+    out["满分显示"] = out["满分"].map(lambda value: f"{value:g}分" if pd.notna(value) else "满分未知")
+    out["评分项目显示"] = out["评分项目显示"] + "（" + out["满分显示"] + "）"
+    return out
+
+
 def item_summary(detail_df):
     if detail_df.empty:
         return pd.DataFrame()
+    detail_with_labels = add_item_display_labels(detail_df)
     summary = (
-        detail_df.groupby(["部分", "评分项目"], dropna=False)
+        detail_with_labels.groupby(["部分", "评分项目显示"], dropna=False)
         .agg(
             平均得分=("得分", "mean"),
             平均得分率=("得分率", "mean"),
-            满分=("满分", "sum"),
+            满分=("满分", "first"),
             样本数=("得分", "count"),
             列顺序=("列顺序", "min"),
         )
         .reset_index()
+        .rename(columns={"评分项目显示": "评分项目"})
     )
     summary["平均得分率"] = summary["平均得分率"].clip(0, 1)
     summary["部分排序"] = summary["部分"].map({part: idx for idx, part in enumerate(PART_ORDER)}).fillna(len(PART_ORDER))
@@ -683,16 +714,41 @@ def fig_part_average(people_df):
     if summary.empty:
         return None
     summary["平均得分"] = summary["平均得分"].round(1)
+    # 创建带满分值的标签
+    summary["部分显示"] = summary["部分"] + "（" + summary["满分"].astype(int).astype(str) + "分）"
     return px.bar(
         summary,
-        x="部分",
+        x="部分显示",
         y="平均得分",
         text="平均得分",
         title="三部分平均得分",
-        category_orders={"部分": PART_ORDER},
-        color="部分",
+        category_orders={"部分显示": [part + "（" + str(PART_MAX_SCORES[part]) + "分）" for part in PART_ORDER]},
+        color="部分显示",
         color_discrete_sequence=["#2563EB", "#059669", "#D97706"],
     )
+
+
+def fig_part_average_rate(people_df):
+    summary = part_score_summary(people_df)
+    if summary.empty:
+        return None
+    summary["平均得分率显示"] = (summary["平均得分率"] * 100).round(1)
+    # 创建带满分值的标签
+    summary["部分显示"] = summary["部分"] + "（" + summary["满分"].astype(int).astype(str) + "分）"
+    fig = px.bar(
+        summary,
+        x="部分显示",
+        y="平均得分率显示",
+        text="平均得分率显示",
+        title="三部分平均得分率",
+        labels={"平均得分率显示": "平均得分率(%)"},
+        category_orders={"部分显示": [part + "（" + str(PART_MAX_SCORES[part]) + "分）" for part in PART_ORDER]},
+        color="部分显示",
+        color_discrete_sequence=["#2563EB", "#059669", "#D97706"],
+    )
+    fig.update_layout(yaxis=dict(range=[0, 100]))
+    fig.add_hline(y=50, line_dash="dash", line_color="#DC2626", annotation_text="50%")
+    return fig
 
 
 def fig_item_rate(detail_df):
@@ -806,11 +862,13 @@ def fig_person_item_radar(person_row, person_detail):
     detail = detail[detail["评分项目"].notna() & detail["评分项目"].astype(str).str.strip().ne("")]
     if detail.empty:
         return None
+    detail = add_item_display_labels(detail)
 
     data = (
-        detail.groupby(["部分", "评分项目"], dropna=False)
+        detail.groupby(["部分", "评分项目显示"], dropna=False)
         .agg(得分=("得分", "sum"), 满分=("满分", "sum"), 列顺序=("列顺序", "min"))
         .reset_index()
+        .rename(columns={"评分项目显示": "评分项目"})
     )
     data["满分"] = pd.to_numeric(data["满分"], errors="coerce")
     data = data[data["满分"].fillna(0) > 0].copy()
@@ -881,15 +939,8 @@ def fig_person_items(person_detail):
     data = person_detail.copy()
     data["得分"] = pd.to_numeric(data["得分"], errors="coerce")
     data["满分"] = pd.to_numeric(data["满分"], errors="coerce")
-    data["项目显示"] = data["评分项目"]
-    duplicated = data["项目显示"].duplicated(keep=False)
-    data["项目序号"] = data.groupby("评分项目", dropna=False).cumcount() + 1
-    data.loc[duplicated, "项目显示"] = (
-        data.loc[duplicated, "评分项目"].astype(str)
-        + " 第"
-        + data.loc[duplicated, "项目序号"].astype(str)
-        + "项"
-    )
+    data = add_item_display_labels(data)
+    data["项目显示"] = data["评分项目显示"]
     data["得分文本"] = data.apply(
         lambda row: f"{row['得分']:g}/{row['满分']:g}" if pd.notna(row["得分"]) and pd.notna(row["满分"]) else "",
         axis=1,
@@ -1026,15 +1077,19 @@ with tab_overview:
     st.dataframe(company_stats(filtered_people), use_container_width=True, hide_index=True)
 
 with tab_parts:
-    chart_col1, chart_col2 = st.columns([1, 2])
+    chart_col1, chart_col2 = st.columns(2)
     with chart_col1:
         fig = fig_part_average(filtered_people)
         if fig:
             st.plotly_chart(fig, use_container_width=True)
     with chart_col2:
-        fig = fig_item_rate(filtered_detail)
+        fig = fig_part_average_rate(filtered_people)
         if fig:
             st.plotly_chart(fig, use_container_width=True)
+
+    fig = fig_item_rate(filtered_detail)
+    if fig:
+        st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("#### 评分项目明细汇总")
     summary = item_summary(filtered_detail)
